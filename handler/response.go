@@ -3,10 +3,10 @@ package handler
 import (
 	"time"
 
-	"github.com/alpody/fiber-realworld/model"
-	"github.com/alpody/fiber-realworld/user"
-	"github.com/alpody/fiber-realworld/utils"
-	_ "github.com/gofiber/fiber/v2"
+	"github.com/alpody/echo-realworld/model"
+	"github.com/alpody/echo-realworld/user"
+	"github.com/alpody/echo-realworld/utils"
+	_ "github.com/labstack/echo/v4"
 )
 
 type userResponse struct {

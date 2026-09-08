@@ -1,6 +1,6 @@
 version: "2"
 services:
-  fiber-realworld:
+  echo-realworld:
     build: .
     ports:
       - "8585:8585"
@@ -10,7 +10,7 @@ services:
     image: postman/newman_alpine33
     command:
       run https://github.com/gothinkster/realworld/raw/main/api/Conduit.postman_collection.json
-      --global-var "APIURL=http://fiber-realworld:8585/api"
+      --global-var "APIURL=http://echo-realworld:8585/api"
       --global-var "USERNAME=user2021"
       --global-var "EMAIL=user2021@example.com"
       --global-var "PASSWORD=password"

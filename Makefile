@@ -10,7 +10,7 @@ export APIURL=http://$(HOST):$(PORT)/api
 #export ROOT=$(realpath $(dir $(lastword $(MAKEFILE_LIST))))
 GOOS=linux
 GOARCH=amd64
-APP=fiber-rw
+APP=echo-rw
 APP_STATIC=$(APP)-static
 LDFLAGS="-w -s -extldflags=-static"
 
@@ -36,7 +36,7 @@ docs:
 	go install github.com/swaggo/swag/cmd/swag@latest
 	go generate .
 
-generate: ## Generate swagger docs. Required https://github.com/gofiber/swagger 
+generate: ## Generate swagger docs. Required https://github.com/swaggo/echo-swagger 
 	go generate .	
 
 build: ## Build project with dynamic library(see shared lib with "ldd <your_file>") 
@@ -46,13 +46,13 @@ build-static: ## Build project as single static linked executable file
 	GOOS=$(GOOS) GOARCH=$(GOARCH) CGO_ENABLED=0  go build -ldflags=$(LDFLAGS)  -o $(APP_STATIC) .
 
 build-image: ## Build docker image. Required https://www.docker.com  
-	docker build -t fiber-rw .
+	docker build -t echo-rw .
 
 run: docs ## Run project 
 	go run -race .
 
 run-container: ## Run container аfter build-container. Required https://www.docker.com  
-	chmod o+w ./database && docker run -p 8585:8585 -v $(PWD)/database:/myapp/database  fiber-rw:latest
+	chmod o+w ./database && docker run -p 8585:8585 -v $(PWD)/database:/myapp/database  echo-rw:latest
 
 
 

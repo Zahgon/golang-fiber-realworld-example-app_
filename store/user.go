@@ -3,7 +3,7 @@ package store
 import (
 	"errors"
 
-	"github.com/alpody/fiber-realworld/model"
+	"github.com/alpody/echo-realworld/model"
 	"gorm.io/gorm"
 )
 

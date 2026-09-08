@@ -3,16 +3,18 @@ package handler
 import (
 	"encoding/json"
 	"log"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 
-	"github.com/alpody/fiber-realworld/article"
-	"github.com/alpody/fiber-realworld/db"
-	"github.com/alpody/fiber-realworld/model"
-	"github.com/alpody/fiber-realworld/router"
-	"github.com/alpody/fiber-realworld/store"
-	"github.com/alpody/fiber-realworld/user"
-	"github.com/gofiber/fiber/v2"
+	"github.com/alpody/echo-realworld/article"
+	"github.com/alpody/echo-realworld/db"
+	"github.com/alpody/echo-realworld/model"
+	"github.com/alpody/echo-realworld/router"
+	"github.com/alpody/echo-realworld/store"
+	"github.com/alpody/echo-realworld/user"
+	"github.com/labstack/echo/v4"
 
 	// _ "gorm.io/driver/postgres"
 	_ "gorm.io/driver/sqlite"
@@ -24,7 +26,7 @@ var (
 	us user.Store
 	as article.Store
 	h  *Handler
-	e  *fiber.App
+	e  *echo.Echo
 )
 
 func TestMain(m *testing.M) {
@@ -36,6 +38,12 @@ func TestMain(m *testing.M) {
 
 func authHeader(token string) string {
 	return "Token " + token
+}
+
+func testRequest(req *http.Request) (*http.Response, error) {
+	rec := httptest.NewRecorder()
+	e.ServeHTTP(rec, req)
+	return rec.Result(), nil
 }
 
 func setup() {

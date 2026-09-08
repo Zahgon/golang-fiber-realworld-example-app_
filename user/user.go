@@ -1,7 +1,7 @@
 package user
 
 import (
-	"github.com/alpody/fiber-realworld/model"
+	"github.com/alpody/echo-realworld/model"
 )
 
 type Store interface {

@@ -3,12 +3,11 @@ package utils
 import (
 	"time"
 
-	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/golang-jwt/jwt/v5"
 )
 
 var secretString = []byte("!!SECRET!!")
-var JWTSecret = jwtware.SigningKey{Key: secretString}
+var JWTSecret = secretString
 
 func GenerateJWT(id uint) string {
 	token := jwt.New(jwt.SigningMethodHS256)

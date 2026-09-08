@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/alpody/fiber-realworld/model"
-	"github.com/alpody/fiber-realworld/utils"
+	"github.com/alpody/echo-realworld/model"
+	"github.com/alpody/echo-realworld/utils"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/labstack/echo/v4"
 )
 
 // GetArticle godoc
@@ -24,16 +24,16 @@ import (
 // @Failure 400 {object} utils.Error
 // @Failure 500 {object} utils.Error
 // @Router /articles/{slug} [get]
-func (h *Handler) GetArticle(c *fiber.Ctx) error {
-	slug := c.Params("slug")
+func (h *Handler) GetArticle(c echo.Context) error {
+	slug := c.Param("slug")
 	a, err := h.articleStore.GetBySlug(slug)
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(utils.NewError(err))
+		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
 	if a == nil {
-		return c.Status(http.StatusNotFound).JSON(utils.NotFound())
+		return c.JSON(http.StatusNotFound, utils.NotFound())
 	}
-	return c.Status(http.StatusOK).JSON(newArticleResponse(userIDFromToken(c), a))
+	return c.JSON(http.StatusOK, newArticleResponse(userIDFromToken(c), a))
 }
 
 // Articles godoc
@@ -50,45 +50,45 @@ func (h *Handler) GetArticle(c *fiber.Ctx) error {
 // @Success 200 {object} articleListResponse
 // @Failure 500 {object} utils.Error
 // @Router /articles [get]
-func (h *Handler) Articles(c *fiber.Ctx) error {
+func (h *Handler) Articles(c echo.Context) error {
 	var (
 		articles []model.Article
 		count    int64
 	)
-	tag := c.Params("tag")
-	author := c.Params("author")
-	favoritedBy := c.Params("favorited")
-	offset, err := strconv.Atoi(c.Params("offset"))
+	tag := c.Param("tag")
+	author := c.Param("author")
+	favoritedBy := c.Param("favorited")
+	offset, err := strconv.Atoi(c.Param("offset"))
 	if err != nil {
 		offset = 0
 	}
 
-	limit, err := strconv.Atoi(c.Params("limit"))
+	limit, err := strconv.Atoi(c.Param("limit"))
 	if err != nil {
 		limit = 20
 	}
 	if tag != "" {
 		articles, count, err = h.articleStore.ListByTag(tag, offset, limit)
 		if err != nil {
-			return c.Status(http.StatusInternalServerError).JSON(utils.NewError(err))
+			return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 		}
 	} else if author != "" {
 		articles, count, err = h.articleStore.ListByAuthor(author, offset, limit)
 		if err != nil {
-			return c.Status(http.StatusInternalServerError).JSON(utils.NewError(err))
+			return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 		}
 	} else if favoritedBy != "" {
 		articles, count, err = h.articleStore.ListByWhoFavorited(favoritedBy, offset, limit)
 		if err != nil {
-			return c.Status(http.StatusInternalServerError).JSON(utils.NewError(err))
+			return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 		}
 	} else {
 		articles, count, err = h.articleStore.List(offset, limit)
 		if err != nil {
-			return c.Status(http.StatusInternalServerError).JSON(utils.NewError(err))
+			return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 		}
 	}
-	return c.Status(http.StatusOK).JSON(newArticleListResponse(h.userStore, userIDFromToken(c), articles, count))
+	return c.JSON(http.StatusOK, newArticleListResponse(h.userStore, userIDFromToken(c), articles, count))
 }
 
 // Feed godoc
@@ -105,24 +105,24 @@ func (h *Handler) Articles(c *fiber.Ctx) error {
 // @Failure 500 {object} utils.Error
 // @Security ApiKeyAuth
 // @Router /articles/feed [get]
-func (h *Handler) Feed(c *fiber.Ctx) error {
+func (h *Handler) Feed(c echo.Context) error {
 	var (
 		articles []model.Article
 		count    int64
 	)
-	offset, err := strconv.Atoi(c.Params("offset"))
+	offset, err := strconv.Atoi(c.Param("offset"))
 	if err != nil {
 		offset = 0
 	}
-	limit, err := strconv.Atoi(c.Params("limit"))
+	limit, err := strconv.Atoi(c.Param("limit"))
 	if err != nil {
 		limit = 20
 	}
 	articles, count, err = h.articleStore.ListFeed(userIDFromToken(c), offset, limit)
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(utils.NewError(nil))
+		return c.JSON(http.StatusInternalServerError, utils.NewError(nil))
 	}
-	return c.Status(http.StatusOK).JSON(newArticleListResponse(h.userStore, userIDFromToken(c), articles, count))
+	return c.JSON(http.StatusOK, newArticleListResponse(h.userStore, userIDFromToken(c), articles, count))
 }
 
 // CreateArticle godoc
@@ -139,18 +139,18 @@ func (h *Handler) Feed(c *fiber.Ctx) error {
 // @Failure 500 {object} utils.Error
 // @Security ApiKeyAuth
 // @Router /articles [post]
-func (h *Handler) CreateArticle(c *fiber.Ctx) error {
+func (h *Handler) CreateArticle(c echo.Context) error {
 	var a model.Article
 	req := &articleCreateRequest{}
 	if err := req.bind(c, &a, h.validator); err != nil {
-		return c.Status(http.StatusUnprocessableEntity).JSON(utils.NewError(err))
+		return c.JSON(http.StatusUnprocessableEntity, utils.NewError(err))
 	}
 	a.AuthorID = userIDFromToken(c)
 	err := h.articleStore.CreateArticle(&a)
 	if err != nil {
-		return c.Status(http.StatusUnprocessableEntity).JSON(utils.NewError(err))
+		return c.JSON(http.StatusUnprocessableEntity, utils.NewError(err))
 	}
-	return c.Status(http.StatusCreated).JSON(newArticleResponse(userIDFromToken(c), &a))
+	return c.JSON(http.StatusCreated, newArticleResponse(userIDFromToken(c), &a))
 }
 
 // UpdateArticle godoc
@@ -170,25 +170,25 @@ func (h *Handler) CreateArticle(c *fiber.Ctx) error {
 // @Failure 500 {object} utils.Error
 // @Security ApiKeyAuth
 // @Router /articles/{slug} [put]
-func (h *Handler) UpdateArticle(c *fiber.Ctx) error {
-	slug := c.Params("slug")
+func (h *Handler) UpdateArticle(c echo.Context) error {
+	slug := c.Param("slug")
 	a, err := h.articleStore.GetUserArticleBySlug(userIDFromToken(c), slug)
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(utils.NewError(err))
+		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
 	if a == nil {
-		return c.Status(http.StatusNotFound).JSON(utils.NotFound())
+		return c.JSON(http.StatusNotFound, utils.NotFound())
 	}
 	req := &articleUpdateRequest{}
 	req.populate(a)
 
 	if err := req.bind(c, a, h.validator); err != nil {
-		return c.Status(http.StatusUnprocessableEntity).JSON(utils.NewError(err))
+		return c.JSON(http.StatusUnprocessableEntity, utils.NewError(err))
 	}
 	if err = h.articleStore.UpdateArticle(a, req.Article.Tags); err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(utils.NewError(err))
+		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
-	return c.Status(http.StatusOK).JSON(newArticleResponse(userIDFromToken(c), a))
+	return c.JSON(http.StatusOK, newArticleResponse(userIDFromToken(c), a))
 }
 
 // DeleteArticle godoc
@@ -205,20 +205,20 @@ func (h *Handler) UpdateArticle(c *fiber.Ctx) error {
 // @Failure 500 {object} utils.Error
 // @Security ApiKeyAuth
 // @Router /articles/{slug} [delete]
-func (h *Handler) DeleteArticle(c *fiber.Ctx) error {
-	slug := c.Params("slug")
+func (h *Handler) DeleteArticle(c echo.Context) error {
+	slug := c.Param("slug")
 	a, err := h.articleStore.GetUserArticleBySlug(userIDFromToken(c), slug)
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(utils.NewError(err))
+		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
 	if a == nil {
-		return c.Status(http.StatusNotFound).JSON(utils.NotFound())
+		return c.JSON(http.StatusNotFound, utils.NotFound())
 	}
 	err = h.articleStore.DeleteArticle(a)
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(utils.NewError(err))
+		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
-	return c.Status(http.StatusOK).JSON(map[string]interface{}{"result": "ok"})
+	return c.JSON(http.StatusOK, map[string]interface{}{"result": "ok"})
 }
 
 // AddComment godoc
@@ -238,24 +238,24 @@ func (h *Handler) DeleteArticle(c *fiber.Ctx) error {
 // @Failure 500 {object} utils.Error
 // @Security ApiKeyAuth
 // @Router /articles/{slug}/comments [post]
-func (h *Handler) AddComment(c *fiber.Ctx) error {
-	slug := c.Params("slug")
+func (h *Handler) AddComment(c echo.Context) error {
+	slug := c.Param("slug")
 	a, err := h.articleStore.GetBySlug(slug)
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(utils.NewError(err))
+		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
 	if a == nil {
-		return c.Status(http.StatusNotFound).JSON(utils.NotFound())
+		return c.JSON(http.StatusNotFound, utils.NotFound())
 	}
 	var cm model.Comment
 	req := &createCommentRequest{}
 	if err := req.bind(c, &cm, h.validator); err != nil {
-		return c.Status(http.StatusUnprocessableEntity).JSON(utils.NewError(err))
+		return c.JSON(http.StatusUnprocessableEntity, utils.NewError(err))
 	}
 	if err = h.articleStore.AddComment(a, &cm); err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(utils.NewError(err))
+		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
-	return c.Status(http.StatusCreated).JSON(newCommentResponse(userIDFromToken(c), &cm))
+	return c.JSON(http.StatusCreated, newCommentResponse(userIDFromToken(c), &cm))
 }
 
 // GetComments godoc
@@ -270,13 +270,13 @@ func (h *Handler) AddComment(c *fiber.Ctx) error {
 // @Failure 422 {object} utils.Error
 // @Failure 500 {object} utils.Error
 // @Router /articles/{slug}/comments [get]
-func (h *Handler) GetComments(c *fiber.Ctx) error {
-	slug := c.Params("slug")
+func (h *Handler) GetComments(c echo.Context) error {
+	slug := c.Param("slug")
 	cm, err := h.articleStore.GetCommentsBySlug(slug)
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(utils.NewError(err))
+		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
-	return c.Status(http.StatusOK).JSON(newCommentListResponse(userIDFromToken(c), cm))
+	return c.JSON(http.StatusOK, newCommentListResponse(userIDFromToken(c), cm))
 }
 
 // DeleteComment godoc
@@ -296,28 +296,28 @@ func (h *Handler) GetComments(c *fiber.Ctx) error {
 // @Failure 500 {object} utils.Error
 // @Security ApiKeyAuth
 // @Router /articles/{slug}/comments/{id} [delete]
-func (h *Handler) DeleteComment(c *fiber.Ctx) error {
-	id64, err := strconv.ParseUint(c.Params("id"), 10, 32)
+func (h *Handler) DeleteComment(c echo.Context) error {
+	id64, err := strconv.ParseUint(c.Param("id"), 10, 32)
 	id := uint(id64)
 	if err != nil {
-		return c.Status(http.StatusBadRequest).JSON(utils.NewError(err))
+		return c.JSON(http.StatusBadRequest, utils.NewError(err))
 	}
 	cm, err := h.articleStore.GetCommentByID(id)
 	if err != nil {
 		log.Println("[FATAL]")
 		log.Fatal(err)
-		return c.Status(http.StatusInternalServerError).JSON(utils.NewError(err))
+		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
 	if cm == nil {
-		return c.Status(http.StatusNotFound).JSON(utils.NotFound())
+		return c.JSON(http.StatusNotFound, utils.NotFound())
 	}
 	if cm.UserID != userIDFromToken(c) {
-		return c.Status(http.StatusUnauthorized).JSON(utils.NewError(errors.New("unathorized action")))
+		return c.JSON(http.StatusUnauthorized, utils.NewError(errors.New("unathorized action")))
 	}
 	if err := h.articleStore.DeleteComment(cm); err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(utils.NewError(err))
+		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
-	return c.Status(http.StatusOK).JSON(map[string]interface{}{"result": "ok"})
+	return c.JSON(http.StatusOK, map[string]interface{}{"result": "ok"})
 }
 
 // Favorite godoc
@@ -336,22 +336,22 @@ func (h *Handler) DeleteComment(c *fiber.Ctx) error {
 // @Failure 500 {object} utils.Error
 // @Security ApiKeyAuth
 // @Router /articles/{slug}/favorite [post]
-func (h *Handler) Favorite(c *fiber.Ctx) error {
-	slug := c.Params("slug")
+func (h *Handler) Favorite(c echo.Context) error {
+	slug := c.Param("slug")
 	a, err := h.articleStore.GetBySlug(slug)
 
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(utils.NewError(err))
+		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
 
 	if a == nil {
-		return c.Status(http.StatusNotFound).JSON(utils.NotFound())
+		return c.JSON(http.StatusNotFound, utils.NotFound())
 	}
 	uid := userIDFromToken(c)
 	if err := h.articleStore.AddFavorite(a, uid); err != nil {
-		return c.Status(http.StatusNotFound).JSON(utils.NotFound())
+		return c.JSON(http.StatusNotFound, utils.NotFound())
 	}
-	return c.Status(http.StatusOK).JSON(newArticleResponse(uid, a))
+	return c.JSON(http.StatusOK, newArticleResponse(uid, a))
 }
 
 // Unfavorite godoc
@@ -370,22 +370,22 @@ func (h *Handler) Favorite(c *fiber.Ctx) error {
 // @Failure 500 {object} utils.Error
 // @Security ApiKeyAuth
 // @Router /articles/{slug}/favorite [delete]
-func (h *Handler) Unfavorite(c *fiber.Ctx) error {
-	slug := c.Params("slug")
+func (h *Handler) Unfavorite(c echo.Context) error {
+	slug := c.Param("slug")
 	a, err := h.articleStore.GetBySlug(slug)
 
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(utils.NewError(err))
+		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
 
 	if a == nil {
-		return c.Status(http.StatusNotFound).JSON(utils.NotFound())
+		return c.JSON(http.StatusNotFound, utils.NotFound())
 	}
 	uid := userIDFromToken(c)
 	if err := h.articleStore.RemoveFavorite(a, uid); err != nil {
-		return c.Status(http.StatusUnprocessableEntity).JSON(utils.NewError(err))
+		return c.JSON(http.StatusUnprocessableEntity, utils.NewError(err))
 	}
-	return c.Status(http.StatusOK).JSON(newArticleResponse(uid, a))
+	return c.JSON(http.StatusOK, newArticleResponse(uid, a))
 }
 
 // Tags godoc
@@ -402,10 +402,10 @@ func (h *Handler) Unfavorite(c *fiber.Ctx) error {
 // @Failure 500 {object} utils.Error
 // @Security ApiKeyAuth
 // @Router /tags [get]
-func (h *Handler) Tags(c *fiber.Ctx) error {
+func (h *Handler) Tags(c echo.Context) error {
 	tags, err := h.articleStore.ListTags()
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(utils.NewError(err))
+		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
-	return c.Status(http.StatusOK).JSON(newTagListResponse(tags))
+	return c.JSON(http.StatusOK, newTagListResponse(tags))
 }

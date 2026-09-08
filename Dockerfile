@@ -7,7 +7,7 @@ WORKDIR /myapp
 
 RUN adduser -u 10001 -D myapp
 
-RUN  go install github.com/swaggo/swag/cmd/swag@latest  &&  go generate . && GOOS=linux GOARCH=amd64 CGO_ENABLED=1  go build -ldflags='-extldflags=-static'  -o myapp .
+RUN  go install github.com/swaggo/swag/cmd/swag@v1.16.5  &&  go generate . && GOOS=linux GOARCH=amd64 CGO_ENABLED=1  go build -ldflags='-extldflags=-static'  -o myapp .
 
 #RUN make build-static 
 RUN chown myapp: ./database
@@ -20,7 +20,7 @@ USER myapp
 
 WORKDIR /myapp
 
-#COPY --from=builder /etc/ssl/certs/ /etc/ssl/certs/
+COPY --from=builder /etc/ssl/certs/ /etc/ssl/certs/
 COPY --from=builder /myapp/myapp ./myapp
 COPY --from=builder /myapp/database ./database
 VOLUME ./database

@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/alpody/fiber-realworld/model"
-	"github.com/alpody/fiber-realworld/utils"
-	"github.com/gofiber/fiber/v2"
+	"github.com/alpody/echo-realworld/model"
+	"github.com/alpody/echo-realworld/utils"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/labstack/echo/v4"
 )
 
 // SignUp godoc
@@ -23,17 +23,17 @@ import (
 // @Failure 404 {objects} utils.Error
 // @Failure 500 {objects} utils.Error
 // @Router /users [post]
-func (h *Handler) SignUp(c *fiber.Ctx) error {
+func (h *Handler) SignUp(c echo.Context) error {
 	var u model.User
 	req := &userRegisterRequest{}
 	if err := req.bind(c, &u, h.validator); err != nil {
-		return c.Status(http.StatusUnprocessableEntity).JSON(utils.NewError(err))
+		return c.JSON(http.StatusUnprocessableEntity, utils.NewError(err))
 	}
 	if err := h.userStore.Create(&u); err != nil {
-		return c.Status(http.StatusUnprocessableEntity).JSON(utils.NewError(err))
+		return c.JSON(http.StatusUnprocessableEntity, utils.NewError(err))
 	}
 
-	return c.Status(http.StatusCreated).JSON(newUserResponse(&u))
+	return c.JSON(http.StatusCreated, newUserResponse(&u))
 }
 
 // Login godoc
@@ -51,23 +51,23 @@ func (h *Handler) SignUp(c *fiber.Ctx) error {
 // @Failure 404 {object} utils.Error
 // @Failure 500 {object} utils.Error
 // @Router /users/login [post]
-func (h *Handler) Login(c *fiber.Ctx) error {
+func (h *Handler) Login(c echo.Context) error {
 	req := &userLoginRequest{}
 	if err := req.bind(c, h.validator); err != nil {
-		return c.Status(http.StatusUnprocessableEntity).JSON(utils.NewError(err))
+		return c.JSON(http.StatusUnprocessableEntity, utils.NewError(err))
 	}
 	u, err := h.userStore.GetByEmail(req.User.Email)
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(utils.NewError(err))
+		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
 	if u == nil {
-		return c.Status(http.StatusForbidden).JSON(utils.AccessForbidden())
+		return c.JSON(http.StatusForbidden, utils.AccessForbidden())
 	}
 	if !u.CheckPassword(req.User.Password) {
 		fmt.Printf("wrong password %v", err)
-		return c.Status(http.StatusForbidden).JSON(utils.AccessForbidden())
+		return c.JSON(http.StatusForbidden, utils.AccessForbidden())
 	}
-	return c.Status(http.StatusOK).JSON(newUserResponse(u))
+	return c.JSON(http.StatusOK, newUserResponse(u))
 }
 
 // CurrentUser godoc
@@ -86,15 +86,15 @@ func (h *Handler) Login(c *fiber.Ctx) error {
 // @Failure 500 {object} utils.Error
 // @Security ApiKeyAuth
 // @Router /user [get]
-func (h *Handler) CurrentUser(c *fiber.Ctx) error {
+func (h *Handler) CurrentUser(c echo.Context) error {
 	u, err := h.userStore.GetByID(userIDFromToken(c))
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(utils.NewError(err))
+		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
 	if u == nil {
-		return c.Status(http.StatusNotFound).JSON(utils.NotFound())
+		return c.JSON(http.StatusNotFound, utils.NotFound())
 	}
-	return c.Status(http.StatusOK).JSON(newUserResponse(u))
+	return c.JSON(http.StatusOK, newUserResponse(u))
 }
 
 // UpdateUser godoc
@@ -113,23 +113,23 @@ func (h *Handler) CurrentUser(c *fiber.Ctx) error {
 // @Failure 500 {object} utils.Error
 // @Security ApiKeyAuth
 // @Router /user [put]
-func (h *Handler) UpdateUser(c *fiber.Ctx) error {
+func (h *Handler) UpdateUser(c echo.Context) error {
 	u, err := h.userStore.GetByID(userIDFromToken(c))
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(utils.NewError(err))
+		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
 	if u == nil {
-		return c.Status(http.StatusNotFound).JSON(utils.NotFound())
+		return c.JSON(http.StatusNotFound, utils.NotFound())
 	}
 	req := newUserUpdateRequest()
 	req.populate(u)
 	if err := req.bind(c, u, h.validator); err != nil {
-		return c.Status(http.StatusUnprocessableEntity).JSON(utils.NewError(err))
+		return c.JSON(http.StatusUnprocessableEntity, utils.NewError(err))
 	}
 	if err := h.userStore.Update(u); err != nil {
-		return c.Status(http.StatusUnprocessableEntity).JSON(utils.NewError(err))
+		return c.JSON(http.StatusUnprocessableEntity, utils.NewError(err))
 	}
-	return c.Status(http.StatusOK).JSON(newUserResponse(u))
+	return c.JSON(http.StatusOK, newUserResponse(u))
 }
 
 // GetProfile godoc
@@ -148,16 +148,16 @@ func (h *Handler) UpdateUser(c *fiber.Ctx) error {
 // @Failure 500 {object} utils.Error
 // @Security ApiKeyAuth
 // @Router /profiles/{username} [get]
-func (h *Handler) GetProfile(c *fiber.Ctx) error {
-	username := c.Params("username")
+func (h *Handler) GetProfile(c echo.Context) error {
+	username := c.Param("username")
 	u, err := h.userStore.GetByUsername(username)
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(utils.NewError(err))
+		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
 	if u == nil {
-		return c.Status(http.StatusNotFound).JSON(utils.NotFound())
+		return c.JSON(http.StatusNotFound, utils.NotFound())
 	}
-	return c.Status(http.StatusOK).JSON(newProfileResponse(h.userStore, userIDFromToken(c), u))
+	return c.JSON(http.StatusOK, newProfileResponse(h.userStore, userIDFromToken(c), u))
 }
 
 // Follow godoc
@@ -176,20 +176,20 @@ func (h *Handler) GetProfile(c *fiber.Ctx) error {
 // @Failure 500 {object} utils.Error
 // @Security ApiKeyAuth
 // @Router /profiles/{username}/follow [post]
-func (h *Handler) Follow(c *fiber.Ctx) error {
+func (h *Handler) Follow(c echo.Context) error {
 	followerID := userIDFromToken(c)
-	username := c.Params("username")
+	username := c.Param("username")
 	u, err := h.userStore.GetByUsername(username)
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(utils.NewError(err))
+		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
 	if u == nil {
-		return c.Status(http.StatusNotFound).JSON(utils.NotFound())
+		return c.JSON(http.StatusNotFound, utils.NotFound())
 	}
 	if err := h.userStore.AddFollower(u, followerID); err != nil {
-		return c.Status(http.StatusUnprocessableEntity).JSON(utils.NewError(err))
+		return c.JSON(http.StatusUnprocessableEntity, utils.NewError(err))
 	}
-	return c.Status(http.StatusOK).JSON(newProfileResponse(h.userStore, userIDFromToken(c), u))
+	return c.JSON(http.StatusOK, newProfileResponse(h.userStore, userIDFromToken(c), u))
 }
 
 // Unfollow godoc
@@ -208,25 +208,25 @@ func (h *Handler) Follow(c *fiber.Ctx) error {
 // @Failure 500 {object} utils.Error
 // @Security ApiKeyAuth
 // @Router /profiles/{username}/follow [delete]
-func (h *Handler) Unfollow(c *fiber.Ctx) error {
+func (h *Handler) Unfollow(c echo.Context) error {
 	followerID := userIDFromToken(c)
-	username := c.Params("username")
+	username := c.Param("username")
 	u, err := h.userStore.GetByUsername(username)
 	if err != nil {
-		return c.Status(http.StatusInternalServerError).JSON(utils.NewError(err))
+		return c.JSON(http.StatusInternalServerError, utils.NewError(err))
 	}
 	if u == nil {
-		return c.Status(http.StatusNotFound).JSON(utils.NotFound())
+		return c.JSON(http.StatusNotFound, utils.NotFound())
 	}
 	if err := h.userStore.RemoveFollower(u, followerID); err != nil {
-		return c.Status(http.StatusUnprocessableEntity).JSON(utils.NewError(err))
+		return c.JSON(http.StatusUnprocessableEntity, utils.NewError(err))
 	}
-	return c.Status(http.StatusOK).JSON(newProfileResponse(h.userStore, userIDFromToken(c), u))
+	return c.JSON(http.StatusOK, newProfileResponse(h.userStore, userIDFromToken(c), u))
 }
 
-func userIDFromToken(c *fiber.Ctx) uint {
+func userIDFromToken(c echo.Context) uint {
 	var user *jwt.Token
-	l := c.Locals("user")
+	l := c.Get("user")
 	if l == nil {
 		return 0
 	}

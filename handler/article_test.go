@@ -3,8 +3,8 @@ package handler
 import (
 	//"fmt"
 
-	"github.com/alpody/fiber-realworld/utils"
-	//"github.com/gofiber/fiber/v2"
+	"github.com/alpody/echo-realworld/utils"
+	//"github.com/labstack/echo/v4"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -24,7 +24,7 @@ func TestListArticlesCaseSuccess(t *testing.T) {
 	req.Header.Set("Content-type", "application/json")
 	h.Register(e)
 
-	resp, err := e.Test(req, -1)
+	resp, err := testRequest(req)
 	assert.NoError(t, err)
 
 	if assert.Equal(t, http.StatusOK, resp.StatusCode) {
@@ -47,7 +47,7 @@ func TestGetArticlesCaseSuccess(t *testing.T) {
 	req.Header.Set("Content-type", "application/json")
 	h.Register(e)
 
-	resp, err := e.Test(req, -1)
+	resp, err := testRequest(req)
 	assert.NoError(t, err)
 
 	if assert.Equal(t, http.StatusOK, resp.StatusCode) {
@@ -70,7 +70,7 @@ func TestCreateArticleCaseSuccess(t *testing.T) {
 	req.Header.Set("Content-type", "application/json")
 	req.Header.Set("Authorization", authHeader(utils.GenerateJWT(1)))
 	h.Register(e)
-	resp, _ := e.Test(req, -1)
+	resp, _ := testRequest(req)
 	if assert.Equal(t, http.StatusCreated, resp.StatusCode) {
 		body, _ := ioutil.ReadAll(resp.Body)
 		var a singleArticleResponse
@@ -96,7 +96,7 @@ func TestUpdateArticleCaseSuccess(t *testing.T) {
 	req.Header.Set("Content-type", "application/json")
 	req.Header.Set("Authorization", authHeader(utils.GenerateJWT(1)))
 	h.Register(e)
-	resp, _ := e.Test(req, -1)
+	resp, _ := testRequest(req)
 	if assert.Equal(t, http.StatusOK, resp.StatusCode) {
 		body, _ := ioutil.ReadAll(resp.Body)
 		var a singleArticleResponse
@@ -119,7 +119,7 @@ func TestFeedCaseSuccess(t *testing.T) {
 	req.Header.Set("Authorization", authHeader(utils.GenerateJWT(1)))
 	h.Register(e)
 
-	resp, err := e.Test(req, -1)
+	resp, err := testRequest(req)
 	assert.NoError(t, err)
 
 	if assert.Equal(t, http.StatusOK, resp.StatusCode) {
@@ -144,11 +144,11 @@ func TestDeleteArticleCaseSuccess(t *testing.T) {
 	req.Header.Set("Authorization", authHeader(utils.GenerateJWT(1)))
 	h.Register(e)
 
-	resp, err := e.Test(req, -1)
+	resp, err := testRequest(req)
 	assert.NoError(t, err)
 
 	if assert.Equal(t, http.StatusOK, resp.StatusCode) {
-		resp, err = e.Test(req, -1)
+		resp, err = testRequest(req)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 	}
@@ -165,7 +165,7 @@ func TestGetCommentsCaseSuccess(t *testing.T) {
 	req.Header.Set("Authorization", authHeader(utils.GenerateJWT(1)))
 	h.Register(e)
 
-	resp, err := e.Test(req, -1)
+	resp, err := testRequest(req)
 	assert.NoError(t, err)
 
 	if assert.Equal(t, http.StatusOK, resp.StatusCode) {
@@ -191,7 +191,7 @@ func TestAddCommentCaseSuccess(t *testing.T) {
 	req.Header.Set("Authorization", authHeader(utils.GenerateJWT(2)))
 	h.Register(e)
 
-	resp, err := e.Test(req, -1)
+	resp, err := testRequest(req)
 	assert.NoError(t, err)
 
 	if assert.Equal(t, http.StatusCreated, resp.StatusCode) {
@@ -214,11 +214,11 @@ func TestDeleteCommentCaseSuccess(t *testing.T) {
 	req.Header.Set("Authorization", authHeader(utils.GenerateJWT(1)))
 	h.Register(e)
 
-	resp, err := e.Test(req, -1)
+	resp, err := testRequest(req)
 	assert.NoError(t, err)
 
 	if assert.Equal(t, http.StatusOK, resp.StatusCode) {
-		resp, err = e.Test(req, -1)
+		resp, err = testRequest(req)
 		assert.NoError(t, err)
 		assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 	}
@@ -234,7 +234,7 @@ func TestFavoriteCaseSuccess(t *testing.T) {
 	req.Header.Set("Authorization", authHeader(utils.GenerateJWT(2)))
 	h.Register(e)
 
-	resp, err := e.Test(req, -1)
+	resp, err := testRequest(req)
 	assert.NoError(t, err)
 	if assert.Equal(t, http.StatusOK, resp.StatusCode) {
 		body, _ := ioutil.ReadAll(resp.Body)
@@ -256,7 +256,7 @@ func TestUnfavoriteCaseSuccess(t *testing.T) {
 	req.Header.Set("Authorization", authHeader(utils.GenerateJWT(1)))
 	h.Register(e)
 
-	resp, err := e.Test(req, -1)
+	resp, err := testRequest(req)
 	assert.NoError(t, err)
 	if assert.Equal(t, http.StatusOK, resp.StatusCode) {
 		body, _ := ioutil.ReadAll(resp.Body)
@@ -276,7 +276,7 @@ func TestGetTagsCaseSuccess(t *testing.T) {
 	req.Header.Set("Content-type", "application/json")
 	h.Register(e)
 
-	resp, err := e.Test(req, -1)
+	resp, err := testRequest(req)
 	assert.NoError(t, err)
 	if assert.Equal(t, http.StatusOK, resp.StatusCode) {
 		body, _ := ioutil.ReadAll(resp.Body)

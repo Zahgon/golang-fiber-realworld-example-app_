@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/alpody/fiber-realworld/utils"
-	_ "github.com/gofiber/fiber/v2"
+	"github.com/alpody/echo-realworld/utils"
+	_ "github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -22,7 +22,7 @@ func TestSignUpCaseSuccess(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/api/users", strings.NewReader(reqJSON))
 	req.Header.Set("Content-type", "application/json")
 	h.Register(e)
-	resp, _ := e.Test(req, -1)
+	resp, _ := testRequest(req)
 	if assert.Equal(t, http.StatusCreated, resp.StatusCode) {
 		body, _ := ioutil.ReadAll(resp.Body)
 		m := responseMap(body, "user")
@@ -43,7 +43,7 @@ func TestLoginCaseSuccess(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/api/users/login", strings.NewReader(reqJSON))
 	req.Header.Set("Content-type", "application/json")
 	h.Register(e)
-	resp, _ := e.Test(req, -1)
+	resp, _ := testRequest(req)
 	if assert.Equal(t, http.StatusOK, resp.StatusCode) {
 		body, _ := ioutil.ReadAll(resp.Body)
 		m := responseMap(body, "user")
@@ -61,7 +61,7 @@ func TestLoginCaseFailed(t *testing.T) {
 	req := httptest.NewRequest(http.MethodPost, "/api/users/login", strings.NewReader(reqJSON))
 	req.Header.Set("Content-type", "application/json")
 	h.Register(e)
-	resp, err := e.Test(req, -1)
+	resp, err := testRequest(req)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusForbidden, resp.StatusCode)
 }
@@ -72,7 +72,7 @@ func TestCurrentUserCaseSuccess(t *testing.T) {
 	req.Header.Set("Content-type", "application/json")
 	req.Header.Set("Authorization", authHeader(utils.GenerateJWT(1)))
 	h.Register(e)
-	resp, err := e.Test(req, -1)
+	resp, err := testRequest(req)
 	assert.NoError(t, err)
 	if assert.Equal(t, http.StatusOK, resp.StatusCode) {
 		body, _ := ioutil.ReadAll(resp.Body)
@@ -89,7 +89,7 @@ func TestCurrentUserCaseInvalid(t *testing.T) {
 	req.Header.Set("Content-type", "application/json")
 	req.Header.Set("Authorization", authHeader(utils.GenerateJWT(100)))
 	h.Register(e)
-	resp, err := e.Test(req, -1)
+	resp, err := testRequest(req)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
 }
@@ -104,7 +104,7 @@ func TestUpdateUserEmail(t *testing.T) {
 	req.Header.Set("Content-type", "application/json")
 	req.Header.Set("Authorization", authHeader(utils.GenerateJWT(1)))
 	h.Register(e)
-	resp, err := e.Test(req, -1)
+	resp, err := testRequest(req)
 	assert.NoError(t, err)
 
 	if assert.Equal(t, http.StatusOK, resp.StatusCode) {
@@ -126,7 +126,7 @@ func TestUpdateUserMultipleField(t *testing.T) {
 	req.Header.Set("Content-type", "application/json")
 	req.Header.Set("Authorization", authHeader(utils.GenerateJWT(1)))
 	h.Register(e)
-	resp, err := e.Test(req, -1)
+	resp, err := testRequest(req)
 	assert.NoError(t, err)
 
 	if assert.Equal(t, http.StatusOK, resp.StatusCode) {
@@ -149,7 +149,7 @@ func TestGetProfileCaseSuccess(t *testing.T) {
 	req.Header.Set("Authorization", authHeader(utils.GenerateJWT(1)))
 	h.Register(e)
 
-	resp, err := e.Test(req, -1)
+	resp, err := testRequest(req)
 	assert.NoError(t, err)
 
 	if assert.Equal(t, http.StatusOK, resp.StatusCode) {
@@ -172,7 +172,7 @@ func TestGetProfileCaseNotFound(t *testing.T) {
 	req.Header.Set("Authorization", authHeader(utils.GenerateJWT(1)))
 	h.Register(e)
 
-	resp, err := e.Test(req, -1)
+	resp, err := testRequest(req)
 	assert.NoError(t, err)
 
 	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
@@ -188,7 +188,7 @@ func TestFollowCaseSuccess(t *testing.T) {
 	req.Header.Set("Authorization", authHeader(utils.GenerateJWT(1)))
 	h.Register(e)
 
-	resp, err := e.Test(req, -1)
+	resp, err := testRequest(req)
 	assert.NoError(t, err)
 
 	if assert.Equal(t, http.StatusOK, resp.StatusCode) {
@@ -212,7 +212,7 @@ func TestFollowCaseInvalidUser(t *testing.T) {
 	req.Header.Set("Authorization", authHeader(utils.GenerateJWT(1)))
 	h.Register(e)
 
-	resp, err := e.Test(req, -1)
+	resp, err := testRequest(req)
 	assert.NoError(t, err)
 
 	assert.Equal(t, http.StatusNotFound, resp.StatusCode)
@@ -229,7 +229,7 @@ func TestUnFollow(t *testing.T) {
 	req.Header.Set("Authorization", authHeader(utils.GenerateJWT(1)))
 	h.Register(e)
 
-	resp, err := e.Test(req, -1)
+	resp, err := testRequest(req)
 	assert.NoError(t, err)
 
 	if assert.Equal(t, http.StatusOK, resp.StatusCode) {
